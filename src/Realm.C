@@ -70,6 +70,7 @@
 #include <TurbulenceAveragingPostProcessing.h>
 #include <DataProbePostProcessing.h>
 #include <wind_energy/BdyLayerStatistics.h>
+#include <wind_energy/SyntheticTurbulence.h>
 
 // actuator line
 #include <Actuator.h>
@@ -654,6 +655,12 @@ Realm::look_ahead_and_creation(const YAML::Node & node)
       const YAML::Node ablNode = node["abl_forcing"];
       ablForcingAlg_ = new ABLForcingAlgorithm(*this, ablNode);
   }
+
+  // Synthetic turbulence forcing
+  if (node["synthetic_turbulence_forcing"]) {
+    synthTurbForcing_.reset(new SyntheticTurbulence(*this));
+    synthTurbForcing_->load(node["synthetic_turbulence_forcing"]);
+  }
 }
   
 //--------------------------------------------------------------------------
@@ -1016,6 +1023,9 @@ Realm::setup_post_processing_algorithms()
   // Boundary layer statistics (MUST BE after turbulence averaging)
   if (nullptr != bdyLayerStats_)
     bdyLayerStats_->setup();
+
+  if (synthTurbForcing_)
+    synthTurbForcing_->setup();
 }
 
 //--------------------------------------------------------------------------
@@ -1995,6 +2005,9 @@ Realm::advance_time_step()
   if ( NULL != ablForcingAlg_) {
     ablForcingAlg_->execute();
   }
+
+  if (synthTurbForcing_)
+    synthTurbForcing_->execute();
 
   const int numNonLinearIterations = equationSystems_.maxIterations_;
   for ( int i = 0; i < numNonLinearIterations; ++i ) {

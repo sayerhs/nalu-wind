@@ -3,4 +3,5 @@ add_sources(GlobalSourceList
   BdyHeightAlgorithm.C
   BdyLayerStatistics.C
   SyntheticLidar.C
+  SyntheticTurbulence.C
   )

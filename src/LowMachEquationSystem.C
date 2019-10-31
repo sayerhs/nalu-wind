@@ -132,6 +132,7 @@
 #include "node_kernels/MomentumCoriolisNodeKernel.h"
 #include "node_kernels/MomentumMassBDFNodeKernel.h"
 #include "node_kernels/MomentumGclSrcNodeKernel.h"
+#include "node_kernels/MomentumSynthTurbNodeKernel.h"
 #include "node_kernels/ContinuityGclNodeKernel.h"
 #include "node_kernels/ContinuityMassBDFNodeKernel.h"
 
@@ -1425,6 +1426,9 @@ MomentumEquationSystem::register_interior_algorithm(
         else if ((srcName == "coriolis") || (srcName == "EarthCoriolis")) {
           nodeAlg.add_kernel<MomentumCoriolisNodeKernel>(
             realm_.bulk_data(), *realm_.solutionOptions_);
+        }
+        else if (srcName == "synthetic_turbulence") {
+          nodeAlg.add_kernel<MomentumSynthTurbNodeKernel>();
         }
         else if (srcName == "gcl") {
           nodeAlg.add_kernel<MomentumGclSrcNodeKernel>(realm_.bulk_data());

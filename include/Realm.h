@@ -80,6 +80,7 @@ class DataProbePostProcessing;
 class Actuator;
 class ABLForcingAlgorithm;
 class BdyLayerStatistics;
+class SyntheticTurbulence;
 
 class TensorProductQuadratureRule;
 class LagrangeBasis;
@@ -451,6 +452,7 @@ class Realm {
   Actuator *actuator_;
   ABLForcingAlgorithm *ablForcingAlg_;
   BdyLayerStatistics* bdyLayerStats_{nullptr};
+  std::unique_ptr<SyntheticTurbulence> synthTurbForcing_;
   std::unique_ptr<MeshMotionAlg> meshMotionAlg_;
 
   std::vector<Algorithm *> propertyAlg_;
