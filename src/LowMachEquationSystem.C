@@ -288,6 +288,28 @@ LowMachEquationSystem::~LowMachEquationSystem()
     delete surfaceForceAndMomentAlgDriver_;
 }
 
+void LowMachEquationSystem::load(const YAML::Node& node)
+{
+  EquationSystem::load(node);
+
+  if (realm_.query_for_overset()) {
+    bool momDecoupled = decoupledOverset_;
+    bool presDecoupled = decoupledOverset_;
+    int momNumIters = numOversetIters_;
+    int presNumIters = numOversetIters_;
+
+    get_if_present_no_default(node, "momentum_decoupled_overset", momDecoupled);
+    get_if_present_no_default(node, "continuity_decoupled_overset", presDecoupled);
+    get_if_present_no_default(node, "momentum_num_overset_correctors", momNumIters);
+    get_if_present_no_default(node, "continuity_num_overset_correctors", presNumIters);
+
+    momentumEqSys_->decoupledOverset_ = momDecoupled;
+    momentumEqSys_->numOversetIters_ = momNumIters;
+    continuityEqSys_->decoupledOverset_ = presDecoupled;
+    continuityEqSys_->numOversetIters_ = presNumIters;
+  }
+}
+
 //--------------------------------------------------------------------------
 //-------- initialize ------------------------------------------------------
 //--------------------------------------------------------------------------
