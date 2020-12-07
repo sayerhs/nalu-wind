@@ -315,6 +315,8 @@ SolutionNormPostProcessing::execute()
   // determine norm  
   stk::mesh::MetaData &metaData = realm_.meta_data();
   stk::mesh::BulkData &bulkData = realm_.bulk_data();
+  const auto* iblank =
+    metaData.get_field<ScalarIntFieldType>(stk::topology::NODE_RANK, "iblank");
 
   // populate the exact field
   for ( size_t k = 0; k < populateExactNodalFieldAlg_.size(); ++k )
@@ -343,7 +345,7 @@ SolutionNormPostProcessing::execute()
     stk::mesh::Bucket & b = **ib ;
     const stk::mesh::Bucket::size_type length   = b.size();
 
-    l_nodeCount += length;
+    // l_nodeCount += length;
     
     int offSet = 0;
     for ( size_t j = 0; j < fieldPairVec_.size(); ++j ) {
@@ -351,6 +353,7 @@ SolutionNormPostProcessing::execute()
       // extract fields
       const double *dofField = (double*)stk::mesh::field_data(*(fieldPairVec_[j].first), b);
       double *exactDofField = (double*)stk::mesh::field_data(*(fieldPairVec_[j].second), b);
+      const int* ibl = stk::mesh::field_data(*iblank, b);
 
       // size of this particular field      
       const int fieldSize = sizeOfEachField_[j];
@@ -361,9 +364,13 @@ SolutionNormPostProcessing::execute()
       double *L2 = &l_L12Norm[offSet+totalDofCompSize_];
 
       for ( stk::mesh::Bucket::size_type k = 0 ; k < length ; ++k ) {
+        const int mask = std::max(ibl[k], 0);
+        l_nodeCount += mask;
         // loop over each field component
         for ( int i = 0; i < fieldSize; ++i ) {
-          const double diff = std::abs(dofField[k*fieldSize+i] - exactDofField[k*fieldSize+i]);
+          const double diff = mask * std::abs(
+                                       dofField[k * fieldSize + i] -
+                                       exactDofField[k * fieldSize + i]);
           // norms...
           Loo[i] = std::max(diff, Loo[i]);
           L1[i] += diff;
