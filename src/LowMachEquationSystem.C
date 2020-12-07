@@ -147,8 +147,9 @@
 #include "ngp_utils/NgpLoopUtils.h"
 #include "ngp_utils/NgpFieldBLAS.h"
 #include "ngp_utils/NgpFieldUtils.h"
-#include "stk_mesh/base/NgpFieldParallel.hpp"
 #include "ngp_utils/NgpTypes.h"
+#include "stk_mesh/base/NgpFieldParallel.hpp"
+#include "stk_mesh/base/GetNgpField.hpp"
 
 
 // nso
@@ -843,6 +844,8 @@ LowMachEquationSystem::project_nodal_velocity()
       .mesh_meta_data_ordinal());
   const auto rhoNp1 = fieldMgr.get_field<double>(
     density_->field_of_state(stk::mesh::StateNP1).mesh_meta_data_ordinal());
+  const auto iblank = stk::mesh::get_updated_ngp_field<int>(
+    *meta_data.get_field<ScalarIntFieldType>(stk::topology::NODE_RANK, "iblank"));
 
   //==========================================================
   // save off dpdx to uTmp (do it everywhere)
@@ -872,7 +875,8 @@ LowMachEquationSystem::project_nodal_velocity()
       ngpMesh, stk::topology::NODE_RANK, sel,
       KOKKOS_LAMBDA(const MeshIndex& mi) {
         // Scaling factor
-        const double fac = 1.0 / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
+        const double ibl = stk::math::max(static_cast<double>(iblank.get(mi, 0)), 0.0);
+        const double fac = ibl / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
         // Projection step
         for (int d=0; d < nDim; ++d) {
           velNp1.get(mi, d) -= fac * (dpdx.get(mi, d) - uTmp.get(mi, d));
@@ -885,7 +889,8 @@ LowMachEquationSystem::project_nodal_velocity()
       ngpMesh, stk::topology::NODE_RANK, selX,
       KOKKOS_LAMBDA(const MeshIndex& mi) {
         // Scaling factor
-        const double fac = 1.0 / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
+        const double ibl = stk::math::max(static_cast<double>(iblank.get(mi, 0)), 0.0);
+        const double fac = ibl / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
         //  undo Projection step
         velNp1.get(mi, 0) += fac * (dpdx.get(mi, 0) - uTmp.get(mi, 0));
       });
@@ -896,7 +901,8 @@ LowMachEquationSystem::project_nodal_velocity()
       ngpMesh, stk::topology::NODE_RANK, selY,
       KOKKOS_LAMBDA(const MeshIndex& mi) {
         // Scaling factor
-        const double fac = 1.0 / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
+        const double ibl = stk::math::max(static_cast<double>(iblank.get(mi, 0)), 0.0);
+        const double fac = ibl / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
         //  undo Projection step
         velNp1.get(mi, 1) += fac * (dpdx.get(mi, 1) - uTmp.get(mi, 1));
       });
@@ -908,7 +914,8 @@ LowMachEquationSystem::project_nodal_velocity()
            ngpMesh, stk::topology::NODE_RANK, selZ,
            KOKKOS_LAMBDA(const MeshIndex& mi) {
              // Scaling factor
-             const double fac = 1.0 / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
+             const double ibl = stk::math::max(static_cast<double>(iblank.get(mi, 0)), 0.0);
+             const double fac = ibl / (rhoNp1.get(mi, 0) * Udiag.get(mi, 0));
              //  undo Projection step
              velNp1.get(mi, 2) += fac * (dpdx.get(mi, 2) - uTmp.get(mi, 2));
            });
