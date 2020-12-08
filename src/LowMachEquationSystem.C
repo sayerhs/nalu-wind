@@ -714,6 +714,8 @@ LowMachEquationSystem::solve_and_update()
     NaluEnv::self().naluOutputP0() << " " << k+1 << "/" << maxIterations_
                     << std::setw(15) << std::right << userSuppliedName_ << std::endl;
 
+    momentumEqSys_->compute_projected_nodal_gradient();
+    continuityEqSys_->compute_projected_nodal_gradient();
     for (int oi=0; oi < momentumEqSys_->numOversetIters_; ++oi) {
       momentumEqSys_->dynPressAlgDriver_.execute();
       if (momentumEqSys_->pecletAlg_) momentumEqSys_->pecletAlg_->execute();
